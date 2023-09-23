@@ -285,7 +285,7 @@ pg.mouse.set_visible(False)
 botplay = False
 blatantbotplay = False
 scoregravity = 0.2
-
+missnotehits = 0
 
 
 
@@ -539,7 +539,7 @@ class arrow_class:
                 
 
     def collide_self(self, event):
-        global score,misses,score_particles,last_score
+        global score,misses,score_particles,last_score,missnotehits
 
         arrow_center = self.pos
 
@@ -600,6 +600,7 @@ class arrow_class:
                     self.visible = False
                     score -= 1000
                     last_score = "FAIL! (-1000)"
+                    missnotehits += 1
                
 
 class hold_segment:
@@ -607,7 +608,7 @@ class hold_segment:
         self.col = int(col)
         self.keybind = list(keybinds.values())[self.col]
         self.keybindALT = list(keybindsALT.values())[self.col]
-        self.sprite = pg.transform.scale(pg.image.load("images/hold_section.png"), (scale, scale/2))
+        self.sprite = pg.transform.scale(pg.image.load("images/hold_section.png"), (scale, scale))
         self.time = time
         self.start = self.time * scrollspeed
         self.position = self.start
@@ -704,7 +705,8 @@ def load_chart():
             
             for i in range(1, num_segments + 1):
                 segment_time = start_time + i * segment_duration  # Calculate segment time
-                notes.append(hold_segment(note["column"], segment_time))
+                if i%2==0:
+                    notes.append(hold_segment(note["column"], segment_time))
 
 
 
@@ -797,8 +799,9 @@ def draw_overlay():
         [font.render("TIME: "+str((round(pg.mixer.music.get_pos()/1000,1))),True,score_color),sound and amogus],
         [font.render(str(last_score),True,score_color),True],
         [font.render("VOL: "+str(round(current_volume*100))+"%",True,score_color),draw_volume_indicator],
-        [font.render("BOTPLAY",True,score_color),botplay and blatantbotplay]
-        
+
+        [font.render("BOTPLAY",True,score_color),botplay and blatantbotplay],
+        [font.render("HALO: "+str(missnotehits),True,score_color),deathnotes_frequency > 0 and missnotehits > 0]        
         ]
 
        
