@@ -1,0 +1,36 @@
+0.1 - implemented the basic input system, and the rough images
+0.2 - implemented a basic chart reader
+0.3 - added a way to generate new charts in a meaningful way
+0.4 - added a way to select a chart
+
+1.0.0 - launch!
+1.0.1 - refined the input system
+1.1.0 - added a scoring system
+
+1.2.0 - added an overlay
+1.2.1 - changed the textures, and added a way to change back to the old textures for performance purposes
+
+1.3.0 - added the settings window
+
+1.4.0 - added botplay
+1.4.1 - refined the song selection menu
+1.4.2 - added a way to change the volume mid song
+
+1.5.0 - added a way to convert a psych chart
+1.5.1 - added hit particles, and a way to disable them for performance purposes
+
+1.6.0 - added a countdown at the start
+1.6.1 - added a second keybind map
+1.6.2 - added a laggy version of score visualization
+1.6.3 - added optional hit sounds
+1.6.4 - refined the settings window
+1.6.5 - changed the hit particles, and a way to change back to the old ones for performance purposes
+1.6.6 - fixed a bug that allowed no song to be selected
+
+1.7.0 - added pause functionality
+1.7.1 - fixed a bug with the hold segment collision detection that lowered performance
+1.7.2 - changed the way that the no song selection gets handled, by selecting a random song
+1.7.2 - fixed a bug that crashed the program on devices with no audio device
+1.7.3 - changed the way that overlay texts are drawn, to ease the creation of new ones
+1.7.4 - added a way to set a fixed scrollspeed across every song
+1.8.0 - added a rough very buggy version of a random death note generation

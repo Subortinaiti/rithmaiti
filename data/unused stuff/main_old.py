@@ -1,0 +1,515 @@
+import pygame as pg
+import random
+import math
+import json
+import time
+import os
+import tkinter as tk
+from tkinter import ttk
+
+
+
+pg.init()
+try:
+    pg.mixer.init()
+    sound = True
+except:
+    sound = False
+
+
+
+keybinds = {
+    "left":             pg.K_z,
+    "down":             pg.K_x,
+    "up":               pg.K_KP2,
+    "right":            pg.K_KP3,
+    "toggle debug":     pg.K_g
+    }
+
+
+def string_to_tuple(s): #bygpt
+    # Remove parentheses and split the string by commas
+    values = s.strip('()').split(',')
+
+    # Convert each value to its appropriate type (int, float, str, etc.)
+    converted_values = []
+    for val in values:
+        val = val.strip()  # Remove extra spaces
+        if val.isnumeric():
+            converted_values.append(int(val))
+        elif val.replace('.', '', 1).isdigit():  # Allowing for floats
+            converted_values.append(float(val))
+        else:
+            converted_values.append(val)
+
+    return tuple(converted_values)
+
+
+selected_song_sus = ""
+class SettingsWindow:
+    def __init__(self, root, settings):
+        self.root = root
+        self.root.title("Settings")
+
+        self.settings = settings
+        self.entry_widgets = {}
+        self.selected_song = ""
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        for idx, (setting_name, setting_value) in enumerate(self.settings.items()):
+            display_name = setting_name.replace("_", " ").capitalize()
+            label = ttk.Label(self.root, text=display_name)
+            label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
+
+            if isinstance(setting_value, bool):
+                checkbox = ttk.Checkbutton(self.root, variable=setting_value)
+                checkbox.grid(row=idx, column=1, padx=10, pady=5, sticky="e")
+            else:
+                entry = ttk.Entry(self.root)
+                entry.insert(0, str(setting_value))
+                entry.grid(row=idx, column=1, padx=10, pady=5, sticky="e")
+                self.entry_widgets[setting_name] = entry
+
+        label_selected_song = ttk.Label(self.root, text="Selected Song")
+        label_selected_song.grid(row=len(self.settings), column=0, padx=10, pady=5, sticky="w")
+
+        entry_selected_song = ttk.Entry(self.root)
+        entry_selected_song.grid(row=len(self.settings), column=1, padx=10, pady=5, sticky="e")
+        self.entry_widgets["selected_song"] = entry_selected_song
+
+        done_button = ttk.Button(self.root, text="Done!", command=self.save_settings)
+        done_button.grid(row=len(self.settings) + 2, columnspan=2, padx=10, pady=15)
+
+    def save_settings(self):
+        global selected_song_sus
+        for setting_name, setting_value in self.settings.items():
+            if isinstance(setting_value, tk.BooleanVar):
+                self.settings[setting_name] = setting_value.get()
+
+            else:
+                entry = self.entry_widgets.get(setting_name)
+                if entry:
+                    self.settings[setting_name] = entry.get()
+
+        selected_song_entry = self.entry_widgets.get("selected_song")
+        if selected_song_entry:
+            self.selected_song = selected_song_entry.get()
+            print("Selected Song:", self.selected_song)
+            selected_song_sus = self.selected_song
+        save_settings_to_file(self.settings)  # Save settings to the file
+        self.root.quit()
+
+def save_settings_to_file(settings):
+#    del settings["selected_song"]
+    with open("data/settings.json", "w") as jsonfile:
+        json.dump(settings, jsonfile, indent=4)
+
+def main_settings():
+    global settings_dict
+    if os.path.exists("data/settings.json"):
+        with open("data/settings.json", "r") as jsonfile:
+            settings_dict = json.load(jsonfile)
+
+    else:
+        settings_dict = {
+            "bad_window": 120,         # Add the bad_window setting
+            "good_window": 90,
+            "great_window": 45,
+            "awesome_window": 30,
+            "enable_particles": True,
+            "particle_livetime": 300,
+            "debug": False,
+            "scale": 60,
+            "fps_cap": 100,
+            "offset": 0,
+            "arrow_center_offset_scale": 0.8,
+            "length_cutoff": 20,
+            "score_color": "(255,255,255)"
+
+        }
+
+
+    root = tk.Tk()
+    app = SettingsWindow(root, settings_dict)
+    root.mainloop()
+    try:
+        root.destroy()
+    except:
+        pass
+
+
+print("available songs:")
+for item in os.listdir("songs/"):
+    print(">",item)
+
+
+main_settings()
+
+
+
+
+enable_particles = settings_dict["enable_particles"]
+particle_livetime = float(settings_dict["particle_livetime"])
+debug = settings_dict["debug"]
+scale = float(settings_dict["scale"])
+fps_cap = float(settings_dict["fps_cap"])
+offset = float(settings_dict["offset"])
+arrow_center_offset_scale = float(settings_dict["arrow_center_offset_scale"])
+length_cutoff = float(settings_dict["length_cutoff"])
+score_color = string_to_tuple(settings_dict["score_color"])
+bad_window = float(settings_dict["bad_window"])
+good_window = float(settings_dict["good_window"])
+great_window = float(settings_dict["great_window"])
+awesome_window = float(settings_dict["awesome_window"])
+selected_song = selected_song_sus
+
+
+
+displaysize = (scale*5.25,scale*10)
+display = pg.display.set_mode(displaysize)
+font = pg.font.Font("data/MinecraftRegular-Bmg3.otf",round(scale/3))
+bad_rect = pg.Rect(0, arrow_center_offset_scale * scale - bad_window, displaysize[1], bad_window * 2)
+good_rect = pg.Rect(0, arrow_center_offset_scale * scale - good_window, displaysize[1], good_window * 2)
+great_rect = pg.Rect(0, arrow_center_offset_scale * scale - great_window, displaysize[1], great_window * 2)
+awesome_rect = pg.Rect(0, arrow_center_offset_scale * scale - awesome_window, displaysize[1], awesome_window * 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+print("loading images...")
+loadingstart = pg.time.get_ticks()
+background_img = pg.transform.scale(pg.image.load("images/background.png"),displaysize)
+background_img = pg.transform.scale(pg.image.load("images/background.png"), displaysize)
+arrow_img = {
+    "left_base": pg.transform.scale(pg.image.load("images/left0.png"), (scale, scale)),
+    "left_press": pg.transform.scale(pg.image.load("images/left1.png"), (scale, scale)),
+    "left2_press": pg.transform.scale(pg.image.load("images/left2.png"), (scale, scale)),
+
+    "up_base": pg.transform.scale(pg.image.load("images/up0.png"), (scale, scale)),
+    "up_press": pg.transform.scale(pg.image.load("images/up1.png"), (scale, scale)),
+    "up2_press": pg.transform.scale(pg.image.load("images/up2.png"), (scale, scale)),
+
+    "down_base": pg.transform.scale(pg.image.load("images/down0.png"), (scale, scale)),
+    "down_press": pg.transform.scale(pg.image.load("images/down1.png"), (scale, scale)),
+    "down2_press": pg.transform.scale(pg.image.load("images/down2.png"), (scale, scale)),
+
+    "right_base": pg.transform.scale(pg.image.load("images/right0.png"), (scale, scale)),
+    "right_press": pg.transform.scale(pg.image.load("images/right1.png"), (scale, scale)),
+    "right2_press": pg.transform.scale(pg.image.load("images/right2.png"), (scale, scale))
+
+}
+
+particles_img = [
+    [
+        pg.transform.scale(pg.image.load("images/particles/left/0.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/left/1.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/left/2.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/left/3.png"), (2*scale, 2*scale))
+    ],
+    [
+        pg.transform.scale(pg.image.load("images/particles/down/0.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/down/1.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/down/2.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/down/3.png"), (2*scale, 2*scale))
+    ],
+    [
+        pg.transform.scale(pg.image.load("images/particles/up/0.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/up/1.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/up/2.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/up/3.png"), (2*scale, 2*scale))
+    ],
+    [
+        pg.transform.scale(pg.image.load("images/particles/right/0.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/right/1.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/right/2.png"), (2*scale, 2*scale)),
+        pg.transform.scale(pg.image.load("images/particles/right/3.png"), (2*scale, 2*scale))
+    ]
+]
+
+print("Done!("+str(pg.time.get_ticks()-loadingstart)+"ms)")
+
+
+class particle_class:
+    def __init__(self,col,livetime):
+        self.col = col
+        self.livetime = [0,livetime]
+        self.pos = (self.col*scale*1.25+scale*0.25-scale/2,scale * arrow_center_offset_scale - scale / 2-scale/2)
+        self.sprites = particles_img[self.col]
+        self.start = pg.time.get_ticks()
+
+
+    def draw_self(self):
+        global particles
+        if self.livetime[0] < self.livetime[1]:
+            self.livetime[0] = pg.time.get_ticks() - self.start
+            animstep = min(int((self.livetime[0] / self.livetime[1]) * len(self.sprites)), len(self.sprites)-1)
+
+            display.blit(self.sprites[animstep],self.pos)
+        else:
+            particles.pop(particles.index(self))
+        
+
+
+def draw_particles():
+    for particle in particles:
+        particle.draw_self()
+
+
+
+
+
+class arrow_class:
+    def __init__(self,col,time):
+        self.col = int(col)
+
+        self.keybind = list(keybinds.values())[self.col]
+
+
+        
+        
+        if col == 0:
+            self.sprite = arrow_img["left_press"]
+        elif col == 1:
+            self.sprite = arrow_img["down_press"]
+        elif col == 2:
+            self.sprite = arrow_img["up_press"]
+        elif col == 3:
+            self.sprite = arrow_img["right_press"]
+
+        self.time = time
+        self.start = self.time * scrollspeed
+        self.position = self.start
+        self.visible = True
+#        self.rect = None
+
+    def draw_self(self):
+
+        self.position = self.start - gametime*scrollspeed+arrow_center_offset_scale*scale-scale/2
+#        self.rect = pg.Rect(self.col*scale*1.25+scale*0.25,self.position,scale,scale)
+        self.pos = (self.col*scale*1.25+scale*0.75,self.position+scale/2)
+#        if debug and self.visible:
+#            pg.draw.rect(display,(255,0,0),self.rect)
+
+        if self.position < displaysize[1]+scale and self.visible and self.position > -scale-arrow_center_offset_scale*scale:
+            display.blit(self.sprite,(self.col*scale*1.25+scale*0.25,self.position))
+
+        if debug and self.visible:
+            pg.draw.circle(display,(255,255,255),self.pos,scale/10)
+
+                
+
+    def collide_self(self, event):
+        global score
+        arrow_center = self.pos
+        if event.key == self.keybind and self.visible:
+            if awesome_rect.collidepoint(arrow_center):
+                self.visible = False
+                score += 350
+                if enable_particles:
+                    particles.append(particle_class(self.col,particle_livetime))
+
+                
+                return True
+            elif great_rect.collidepoint(arrow_center):
+                self.visible = False
+                score += 200
+                return True
+            elif good_rect.collidepoint(arrow_center):
+                self.visible = False
+                score += 100
+                return True
+            elif bad_rect.collidepoint(arrow_center):
+                self.visible = False
+                score += 50
+                return True
+            return False
+                
+
+class hold_segment:
+    def __init__(self,col,time):
+        self.col = int(col)
+        self.keybind = list(keybinds.values())[self.col]
+        self.sprite = pg.transform.scale(pg.image.load("images/hold_section.png"), (scale, scale/2))
+        self.time = time
+        self.start = self.time * scrollspeed
+        self.position = self.start
+        self.visible = True
+
+    def draw_self(self):
+        self.position = self.start - gametime*scrollspeed+arrow_center_offset_scale*scale-scale/4
+        self.pos = (self.col*scale*1.25+scale*0.75,self.position+scale/4)
+
+
+        if self.position < displaysize[1]+scale and self.visible and self.position > -scale-arrow_center_offset_scale*scale:
+            display.blit(self.sprite,(self.col*scale*1.25+scale*0.25,self.position))
+        self.collide_self()
+
+
+    def collide_self(self):
+        global score
+        if awesome_rect.collidepoint(self.pos) and self.visible and keystate[self.keybind]:
+            self.visible = False
+            score += 10
+
+
+
+
+def load_chart():
+    global scrollspeed, chart_file
+    loadingstart = pg.time.get_ticks()    
+    print("loading chart...")
+    chart_file = json.load(open("songs/" + selected_song + "/chart.json"))
+    scrollspeed = chart_file["metadata"]["scrollspeed"] / 4
+    notes = []
+    base_offset = chart_file["metadata"]["baseoffset"]
+
+    for note in chart_file["notes"]:
+        if note["type"] == "arrow":
+            notes.append(arrow_class(note["column"], note["time"] + offset + base_offset))
+        elif note["type"] == "hold":
+            start_time = note["time"] + offset + base_offset
+            notes.append(arrow_class(note["column"], start_time))
+            
+            hold_duration = note["length"]
+            segment_duration = scale / 4  # Duration of each segment
+            
+            num_segments = int(hold_duration / segment_duration)  # Calculate the number of segments
+            
+            for i in range(1, num_segments + 1):
+                segment_time = start_time + i * segment_duration  # Calculate segment time
+                notes.append(hold_segment(note["column"], segment_time))
+    print("Done!("+str(pg.time.get_ticks()-loadingstart)+"ms)")                
+    return notes
+
+
+
+def draw_base():
+    display.blit(background_img, (0, 0))
+
+    if debug:
+        pg.draw.rect(display,(255,100,100),bad_rect)
+        pg.draw.rect(display,(100,255,100),good_rect)
+        pg.draw.rect(display,(100,100,255),great_rect)
+        pg.draw.rect(display,(255,100,255),awesome_rect)
+
+    if not keystate[keybinds["left"]]:
+        display.blit(arrow_img["left_base"], (0.25 * scale, scale * arrow_center_offset_scale - scale / 2))
+    else:
+        display.blit(arrow_img["left2_press"], (0.25 * scale, scale * arrow_center_offset_scale - scale / 2))
+
+    if not keystate[keybinds["down"]]:
+        display.blit(arrow_img["down_base"], (0.5 * scale + scale, scale * arrow_center_offset_scale - scale / 2))
+    else:
+        display.blit(arrow_img["down2_press"], (0.5 * scale + scale, scale * arrow_center_offset_scale - scale / 2))
+
+    if not keystate[keybinds["up"]]:
+        display.blit(arrow_img["up_base"], (0.75 * scale + 2 * scale, scale * arrow_center_offset_scale - scale / 2))
+    else:
+        display.blit(arrow_img["up2_press"], (0.75 * scale + 2 * scale, scale * arrow_center_offset_scale - scale / 2))
+
+    if not keystate[keybinds["right"]]:
+        display.blit(arrow_img["right_base"], (4 * scale, scale * arrow_center_offset_scale - scale / 2))
+    else:
+        display.blit(arrow_img["right2_press"], (4 * scale, scale * arrow_center_offset_scale - scale / 2))
+
+
+def do_chart():
+    for note in chart:
+        note.draw_self()
+
+
+
+def draw_overlay():
+       display.blit(font.render("SCORE: "+str(score),True,score_color),(scale*0.1,displaysize[1]-scale*0.4))
+       display.blit(font.render(str((round(pg.mixer.music.get_pos()/1000,1))),True,score_color),(scale*0.1,displaysize[1]-scale*0.8))
+       fps = font.render(str(round(clock.get_fps())),True,score_color)
+       display.blit(fps,(displaysize[0]-scale*0.1-fps.get_rect().width,displaysize[1]-scale*0.4))       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def main():
+    global started,dead,clock,gametime,chart,keystate,score,debug,particles
+    if enable_particles:
+        particles = []
+    clock = pg.time.Clock()
+    score = 0
+    started = False
+    dead = False
+    while not started:
+        for event in pg.event.get():
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+                dead = True
+                started = True
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                started = True
+
+
+
+    chart = load_chart()                
+    if sound:
+        pg.mixer.music.load("songs/"+selected_song+"/music.mp3")
+        pg.mixer.music.play()
+    start_time = pg.time.get_ticks()    
+    runtime = pg.time.get_ticks()
+
+
+
+
+    while not dead:
+        for event in pg.event.get():
+            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+                dead = True
+            if event.type == pg.KEYDOWN and event.key in keybinds.values():
+                if event.key == keybinds["toggle debug"]:
+                    debug = not debug
+                    print("debug:",debug)
+                else:
+                    for note in chart:
+                        if note.visible and type(note) == arrow_class:
+                            if note.collide_self(event):
+                                break
+            
+
+
+        runtime = pg.time.get_ticks()
+        gametime = runtime-start_time
+        keystate = pg.key.get_pressed()
+        draw_base()
+        do_chart()
+
+        if enable_particles:
+            draw_particles()
+
+        
+        draw_overlay()
+        clock.tick(fps_cap)
+        pg.display.update()
+
+
+main()
+pg.quit()
+quit()
