@@ -50,7 +50,7 @@ draw_volume_indicator = True
 # the length of the display window (scaled)
 display_window_height = 10
 # how wide should be the window for the death note removal function
-deathnote_edge = 150
+deathnote_edge = 250
 
 
 
@@ -545,52 +545,62 @@ class arrow_class:
 
         if not self.passed and self.position < -scale-arrow_center_offset_scale*scale and self.visible:
             self.passed = True
-            misses += 1
+            misses += 1   # unused
 
-        if (event.key == self.keybind or event.key == self.keybindALT) and self.visible:
-            outcome = 0
-            if awesome_rect.collidepoint(arrow_center):
-                self.visible = False
-                score += 350
-                last_score = "AWESOME! (350)"
-                if enable_particles:
-                    particles.append(particle_class(self.col,particle_livetime,"Awesome"))
 
-                if score_fadetime > 0:
-                    score_particles.append(score_particle_class(3))
-                
-                outcome = 1
-            elif great_rect.collidepoint(arrow_center):
-                self.visible = False
-                score += 200
-                last_score = "GREAT! (200)"
-                if enable_particles and permissive_particles:
-                    particles.append(particle_class(self.col,particle_livetime,"Great"))
+        if not self.is_deathnote:
+            if (event.key == self.keybind or event.key == self.keybindALT) and self.visible:
+                outcome = 0
+                if awesome_rect.collidepoint(arrow_center):
+                    self.visible = False
+                    score += 350
+                    last_score = "AWESOME! (350)"
+                    if enable_particles:
+                        particles.append(particle_class(self.col,particle_livetime,"Awesome"))
 
-                if score_fadetime > 0:
-                    score_particles.append(score_particle_class(2))
+                    if score_fadetime > 0:
+                        score_particles.append(score_particle_class(3))
+                    
+                    outcome = 1
+                elif great_rect.collidepoint(arrow_center):
+                    self.visible = False
+                    score += 200
+                    last_score = "GREAT! (200)"
+                    if enable_particles and permissive_particles:
+                        particles.append(particle_class(self.col,particle_livetime,"Great"))
 
-                outcome = 1
-            elif good_rect.collidepoint(arrow_center):
-                self.visible = False
-                last_score = "GOOD! (100)"
-                score += 100
+                    if score_fadetime > 0:
+                        score_particles.append(score_particle_class(2))
 
-                if score_fadetime > 0:
-                    score_particles.append(score_particle_class(1))
+                    outcome = 1
+                elif good_rect.collidepoint(arrow_center):
+                    self.visible = False
+                    last_score = "GOOD! (100)"
+                    score += 100
 
-                outcome = 1
-            elif bad_rect.collidepoint(arrow_center):
-                self.visible = False
-                last_score = "BAD. (50)"
-                score += 50
+                    if score_fadetime > 0:
+                        score_particles.append(score_particle_class(1))
 
-                if score_fadetime > 0:
-                    score_particles.append(score_particle_class(0))
+                    outcome = 1
+                elif bad_rect.collidepoint(arrow_center):
+                    self.visible = False
+                    last_score = "BAD. (50)"
+                    score += 50
 
-                outcome = 1
-            return outcome
-                
+                    if score_fadetime > 0:
+                        score_particles.append(score_particle_class(0))
+
+                    outcome = 1
+                return outcome
+        
+        else:
+            if (event.key == self.keybind or event.key == self.keybindALT) and self.visible:
+                outcome=0
+                if good_rect.collidepoint(arrow_center):
+                    self.visible = False
+                    score -= 1000
+                    last_score = "FAIL! (-1000)"
+               
 
 class hold_segment:
     def __init__(self,col,time):
@@ -678,7 +688,10 @@ def load_chart():
             notes.append(arrow_class(note["column"], note["time"] + offset + base_offset + countdown_length))
 
             if deathnotes_frequency > 0 and random.random() <= deathnotes_frequency:
-                deathnotes.append(arrow_class(random.randint(0,3), note["time"] + offset + base_offset + countdown_length,True))
+                rancol = random.randint(0,3)
+                while rancol == note["column"]:
+                   rancol = random.randint(0,3) 
+                deathnotes.append(arrow_class(rancol, note["time"] + offset + base_offset + countdown_length,True))
 
             
         elif note["type"] == "hold":
@@ -700,17 +713,16 @@ def load_chart():
 
             for Dnote in deathnotes:
                 for note in notes:
-                    if (Dnote.time < note.time+deathnote_edge and  Dnote.time > note.time-deathnote_edge) and note.col == Dnote.col:
-                        deathnotes.pop(deathnotes.index(Dnote))
+                    if (Dnote.time <= note.time+deathnote_edge and  Dnote.time >= note.time-deathnote_edge) and note.col == Dnote.col:
+                        try:
+                            deathnotes.pop(deathnotes.index(Dnote))
+                        except:
+                            None
 
     except:
         print("error while inserting deathnotes, defaulting to 0 notes")
         deathnotes = []
     notes.extend(deathnotes)
-
-
-
-
 
 
 
@@ -979,7 +991,7 @@ def main():
 
         if botplay:
             for note in chart:
-                if awesome_rect.collidepoint(note.pos) and note.visible and (type(note) == arrow_class and not note.is_deathnote):
+                if awesome_rect.collidepoint(note.pos) and note.visible and ((type(note) == arrow_class and not note.is_deathnote) or type(note) == hold_segment):
                     note.visible = False
                     if not blatantbotplay:
                         if type(note) == arrow_class:
