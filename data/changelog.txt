@@ -33,4 +33,5 @@
 1.7.2 - fixed a bug that crashed the program on devices with no audio device
 1.7.3 - changed the way that overlay texts are drawn, to ease the creation of new ones
 1.7.4 - added a way to set a fixed scrollspeed across every song
+
 1.8.0 - added a rough very buggy version of a random death note generation
