@@ -12,3 +12,13 @@ DOWN = (x,DOWN)
 UP = (numpad2,UP)
 
 RIGHT = (numpad3,RIGHT)
+
+toggle debug = G
+
+toggle botplay = B
+
+
+
+
+
+
