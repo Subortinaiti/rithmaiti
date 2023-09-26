@@ -283,7 +283,7 @@ selected_song = selected_song_sus
 pg.display.set_caption(selected_song)
 pg.mouse.set_visible(False)
 botplay = False
-blatantbotplay = False
+blatantbotplay = True
 scoregravity = 0.2
 missnotehits = 0
 
