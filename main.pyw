@@ -825,7 +825,10 @@ def draw_overlay():
             pos[1] -= 0.4*scale
         
         if item[1]:
-            display.blit(item[0],pos)
+            try:
+                display.blit(item[0],pos)
+            except:
+                None
 
 
         
