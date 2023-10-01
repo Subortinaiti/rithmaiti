@@ -49,8 +49,10 @@ hold_segment_worthiness = False
 draw_volume_indicator = True
 # the length of the display window (scaled)
 display_window_height = 10
-# how wide should be the window for the death note removal function
-deathnote_edge = 250
+# how wide should be the window for the death note removal function (scaled)
+deathnote_edge = 5
+# if the game should check for collision for each deathnote, slowing loading times
+accurate_deathnote_removal = False
 
 
 
@@ -256,7 +258,7 @@ visual_offset = float(settings_dict["visual_offset"])
 scrollspeed_multiplier = abs(float(settings_dict["scrollspeed_multiplier"]))
 current_volume = float(settings_dict["current_volume"])
 deathnotes_frequency = float(settings_dict["deathnotes_frequency"])
-
+deathnote_edge = deathnote_edge * scale
 
 
 
@@ -715,15 +717,36 @@ def load_chart():
 
             for Dnote in deathnotes:
                 for note in notes:
-                    if (Dnote.time <= note.time+deathnote_edge and  Dnote.time >= note.time-deathnote_edge) and note.col == Dnote.col:
+                    if Dnote.time <= note.time+deathnote_edge and  Dnote.time >= note.time-deathnote_edge and note.col == Dnote.col:
                         try:
                             deathnotes.pop(deathnotes.index(Dnote))
                         except:
                             None
 
+                    if accurate_deathnote_removal:
+                        Dnotepos = (Dnote.col*scale*1.25+scale*0.75,Dnote.position+scale/2)
+                        Dnoterect = pg.Rect(Dnotepos,(scale,scale))
+                        
+                        notepos = (note.col*scale*1.25+scale*0.75,note.position+scale/2-deathnote_edge)
+                        noterect = pg.Rect(Dnotepos,(scale,scale+2*deathnote_edge))
+
+                        if Dnoterect.colliderect(noterect):
+                            try:
+                                deathnotes.pop(deathnotes.index(Dnote))
+                            except:
+                                None
+                            
+
+                            
+
     except:
         print("error while inserting deathnotes, defaulting to 0 notes")
         deathnotes = []
+
+    
+        
+
+        
     notes.extend(deathnotes)
 
 
@@ -793,16 +816,18 @@ def do_chart():
 
 
 def draw_overlay():
-    overlay_items = [
-        [font.render("SCORE: "+str(score),True,score_color),True],
-        [font.render("FPS: "+str(round(clock.get_fps())),True,score_color),True],
-        [font.render("TIME: "+str((round(pg.mixer.music.get_pos()/1000,1))),True,score_color),sound and amogus],
-        [font.render(str(last_score),True,score_color),True],
-        [font.render("VOL: "+str(round(current_volume*100))+"%",True,score_color),draw_volume_indicator],
+    overlay_items = []
+    overlay_items.append([font.render("SCORE: "+str(score),True,score_color),True])
+    overlay_items.append([font.render("FPS: "+str(round(clock.get_fps())),True,score_color),True])
+    try:
+        overlay_items.append([font.render("TIME: "+str((round(pg.mixer.music.get_pos()/1000,1))),True,score_color),sound and amogus])
+    except:
+        None
+    overlay_items.append([font.render(str(last_score),True,score_color),True])
+    overlay_items.append([font.render("VOL: "+str(round(current_volume*100))+"%",True,score_color),draw_volume_indicator])
+    overlay_items.append([font.render("BOTPLAY",True,score_color),botplay and blatantbotplay])
+    overlay_items.append([font.render("CB: "+str(missnotehits),True,score_color),deathnotes_frequency > 0 and missnotehits > 0])       
 
-        [font.render("BOTPLAY",True,score_color),botplay and blatantbotplay],
-        [font.render("HALO: "+str(missnotehits),True,score_color),deathnotes_frequency > 0 and missnotehits > 0]        
-        ]
 
        
 
@@ -971,7 +996,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_KP0:
                 blatantbotplay = not blatantbotplay
 
-################  ################  ################  ################  ################  ################  ################
+
             if event.type == pg.KEYDOWN and event.key in [pg.K_RETURN,pg.K_SPACE,pg.K_KP_ENTER]:
                 pausedstart = pg.time.get_ticks()
                 paused_ = True
@@ -991,7 +1016,7 @@ def main():
                             pg.display.set_caption(selected_song)
                     draw_text_centered("PAUSED",pg.font.Font("data/MinecraftRegular-Bmg3.otf",round(scale)),score_color,displaysize[0]/2,displaysize[1]/2)
                     pg.display.flip()
-################  ################  ################  ################  ################  ################  ################
+
 
         draw_base()
 
@@ -1042,8 +1067,6 @@ def main():
         clock.tick(fps_cap)
         pg.display.flip()
 
-#        if sound and str((round(pg.mixer.music.get_pos()/1000,1))) == "-0.0":
-#            dead = True
 
 main()
 pg.quit()
