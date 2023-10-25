@@ -679,7 +679,7 @@ def load_chart():
     print("loading chart...")
     chart_file = json.load(open("songs/" + selected_song + "/chart.json"))
     if not ignore_scrollspeed:
-        scrollspeed = (chart_file["metadata"]["scrollspeed"] / 4) * scrollspeed_multiplier
+        scrollspeed = (chart_file["metadata"]["scrollspeed"] / 4) * scrollspeed_multiplier * (scale/90)
     else:
         scrollspeed = scrollspeed_multiplier / 4
     print("detected scrollspeed:",scrollspeed)
