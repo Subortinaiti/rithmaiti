@@ -681,7 +681,7 @@ def load_chart():
     if not ignore_scrollspeed:
         scrollspeed = (chart_file["metadata"]["scrollspeed"] / 4) * scrollspeed_multiplier * (scale/90)
     else:
-        scrollspeed = scrollspeed_multiplier / 4
+        scrollspeed = scrollspeed_multiplier / 4  * (scale/90)
     print("detected scrollspeed:",scrollspeed)
     notes = []
     base_offset = chart_file["metadata"]["baseoffset"]
