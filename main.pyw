@@ -541,7 +541,7 @@ class arrow_class:
                 
 
     def collide_self(self, event):
-        global score,misses,score_particles,last_score,missnotehits
+        global score,misses,score_particles,last_score,missnotehits,max_score
 
         arrow_center = self.pos
 
@@ -556,6 +556,7 @@ class arrow_class:
                 if awesome_rect.collidepoint(arrow_center):
                     self.visible = False
                     score += 350
+                    max_score += 350
                     last_score = "AWESOME! (350)"
                     if enable_particles:
                         particles.append(particle_class(self.col,particle_livetime,"Awesome"))
@@ -567,6 +568,7 @@ class arrow_class:
                 elif great_rect.collidepoint(arrow_center):
                     self.visible = False
                     score += 200
+                    max_score += 350
                     last_score = "GREAT! (200)"
                     if enable_particles and permissive_particles:
                         particles.append(particle_class(self.col,particle_livetime,"Great"))
@@ -579,7 +581,7 @@ class arrow_class:
                     self.visible = False
                     last_score = "GOOD! (100)"
                     score += 100
-
+                    max_score += 350
                     if score_fadetime > 0:
                         score_particles.append(score_particle_class(1))
 
@@ -588,7 +590,7 @@ class arrow_class:
                     self.visible = False
                     last_score = "BAD. (50)"
                     score += 50
-
+                    max_score += 350
                     if score_fadetime > 0:
                         score_particles.append(score_particle_class(0))
 
@@ -628,11 +630,12 @@ class hold_segment:
 
 
     def collide_self(self):
-        global score
+        global score,max_score
         if awesome_rect.collidepoint(self.pos) and self.visible and (keystate[self.keybind] or keystate[self.keybindALT]):
             self.visible = False
             if hold_segment_worthiness:
                 score += 1
+                max_score += 1
 
 
 def blit_alpha(target, source, location, opacity):
@@ -673,7 +676,7 @@ class score_particle_class:
 
 
 def load_chart():
-    global scrollspeed, chart_file
+    global scrollspeed, chart_file, max_score
     loadingstart = pg.time.get_ticks()
     deathnotes = []
     print("loading chart...")
@@ -751,7 +754,12 @@ def load_chart():
 
 
 
-
+    max_score = 0
+##    for note in notes:
+##        if type(note) == arrow_class:
+##            max_score += 350
+##        elif hold_segment_worthiness and type(note) == hold_class:
+##            max_score += 10
                 
     print("Done!("+str(pg.time.get_ticks()-loadingstart)+"ms)")
 
@@ -813,7 +821,13 @@ def do_chart():
     for note in chart:
         note.draw_self()
 
-
+def calculate_score_percentage(score):
+    try:
+        n = (score/max_score)*100
+        return str(round(n,2))+"%"
+    except:
+        return str("N/A")
+    
 
 def draw_overlay():
     overlay_items = []
@@ -825,8 +839,10 @@ def draw_overlay():
         None
     overlay_items.append([font.render(str(last_score),True,score_color),True])
     overlay_items.append([font.render("VOL: "+str(round(current_volume*100))+"%",True,score_color),draw_volume_indicator])
+    overlay_items.append([font.render("ACC: ("+calculate_score_percentage(score)+")",True,score_color),True])
     overlay_items.append([font.render("BOTPLAY",True,score_color),botplay and blatantbotplay])
-    overlay_items.append([font.render("CB: "+str(missnotehits),True,score_color),deathnotes_frequency > 0 and missnotehits > 0])       
+    overlay_items.append([font.render("CB: "+str(missnotehits),True,score_color),deathnotes_frequency > 0 and missnotehits > 0])
+
 
 
        
@@ -943,7 +959,13 @@ def main():
         try:
             pg.mixer.music.load("songs/"+selected_song+"/music.mp3")
         except:
-            pg.mixer.music.load("songs/"+selected_song+"/song.mp3")
+            try:
+                pg.mixer.music.load("songs/"+selected_song+"/song.mp3")
+            except:
+                try:
+                    pg.mixer.music.load("songs/"+selected_song+"/song.ogg")
+                except:
+                    pg.mixer.music.load("songs/"+selected_song+"/music.ogg")
         pg.mixer.music.play()
         pg.mixer.music.set_volume(current_volume)
         
