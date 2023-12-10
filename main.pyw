@@ -887,7 +887,7 @@ def draw_score_particles():
 def main():
     global started,dead,clock,gametime,chart,keystate,score,debug,particles,current_volume,misses,botplay
     global amogus,countdown_length,score_particles,last_score,hitsound_snd,enable_hitsounds,blatantbotplay
-    global pausedtime
+    global pausedtime,max_score
     
     if sound:
         hitsound_snd = pg.mixer.Sound("data/hitsound.mp3")
@@ -1049,6 +1049,7 @@ def main():
                     if not blatantbotplay:
                         if type(note) == arrow_class:
                             score += 350
+                            max_score += 350
                             last_score = "AWESOME! (350)"
                             if score_fadetime > 0:
                                 score_particles.append(score_particle_class(3))
